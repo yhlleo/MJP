@@ -11,7 +11,7 @@
 **[[arXiv]](https://arxiv.org/pdf/2205.12551.pdf) | [[Codes]](https://github.com/yhlleo/MJP)** <br> 
 Yahui Liu, Bin Ren, Yue Song, Wei Bi, Nicu Sebe and Wei Wang <br>
 
-![](./figures/gradient-attack)
+![](./figures/gradient-attack.jpg)
 
 ### Datasets
 
