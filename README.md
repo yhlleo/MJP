@@ -9,9 +9,14 @@
 
 
 **[[arXiv]](https://arxiv.org/pdf/2205.12551.pdf) | [[Codes]](https://github.com/yhlleo/MJP)** <br> 
-Yahui Liu, Bin Ren, Yue Song, Wei Bi, Nicu Sebe and Wei Wang <br>
+Yahui Liu<sup>1</sup>, Bin Ren<sup>1</sup>, Yue Song<sup>1</sup>, Wei Bi<sup>2</sup>, Nicu Sebe<sup>1</sup> and Wei Wang<sup>1</sup> <br>
+<sup>1</sup>University of Trento, Italy, <sup>2</sup>Tencent AI Lab, China <br>
 
-![](./figures/gradient-attack.jpg)
+<p align="center">
+<img src="figures/gradient-attack.jpg" width="800px"/>
+<br>
+Visual comparisons on image recovery with gradient attacks.
+</p>
 
 ### Datasets
 
