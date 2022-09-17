@@ -9,8 +9,9 @@
 
 
 **[[arXiv]](https://arxiv.org/pdf/2205.12551.pdf) | [[Codes]](https://github.com/yhlleo/MJP)** <br> 
-Yahui Liu<sup>1</sup>, Bin Ren<sup>1</sup>, Yue Song<sup>1</sup>, Wei Bi<sup>2</sup>, Nicu Sebe<sup>1</sup> and Wei Wang<sup>1</sup> <br>
-<sup>1</sup>University of Trento, Italy, <sup>2</sup>Tencent AI Lab, China <br>
+Yahui Liu<sup>1</sup>, Bin Ren<sup>1,3</sup>, Yue Song<sup>1</sup>, Wei Bi<sup>2</sup>, Nicu Sebe<sup>1</sup> and Wei Wang<sup>1</sup> <br>
+<sup>1</sup>University of Trento, Italy, <sup>2</sup>Tencent AI Lab, China,
+<sup>3</sup>University of Pisa, Italy<br>
 
 <p align="center">
 <img src="figures/gradient-attack.jpg" width="800px"/>
@@ -46,6 +47,9 @@ dataset_name
        |    |__...
        |__...
 ```
+
+### Checkpoints 
+You can find our pretrained checkpoints and 999 images sampled from ImageNet for attacking [here](https://drive.google.com/drive/folders/1P6LnqhLTyG7CRcb7_NsFDVmQ1cOFoNeV?usp=sharing).
 
 ### Training 
 
