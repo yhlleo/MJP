@@ -26,26 +26,13 @@ def patch_prior(x, model):
 def grad_prior(x, model):
     pass
 
-def train(data_path, model=None):
+def train(model=None, data=None):
     seed = 1234
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.benchmark = True
-
-    # --- prepare data ---
-    dataset_train = GradVitDataset(
-        root_path = data_path
-    )
-    data = DataLoader(
-        dataset_train,
-        batch_size=1,
-        pin_memory=True,
-        num_workers=8,
-        drop_last=True,
-        shuffle=False
-    )
 
     # --- gt_prior ---
     img_prior_gt = image_prior(inp_gt, net)
@@ -94,8 +81,10 @@ def train(data_path, model=None):
 
             step += 1
 
+        #TODO: save images
         if step % 1000 == 1:
-            inp_noise.permute(1, 2, 0)
+
+            pass
     
 
 if __name__ == "__main__":
@@ -103,6 +92,19 @@ if __name__ == "__main__":
     DATA_PATH = "./gradVit/data4GradVit"
     model_type = "vit-small" # mjp, vit-small
     model_path = ""
+
+    # --- data ---
+    dataset_train = GradVitDataset(
+        root_path = DATA_PATH
+    )
+    data = DataLoader(
+        dataset_train,
+        batch_size=1,
+        pin_memory=True,
+        num_workers=8,
+        drop_last=True,
+        shuffle=False
+    )
 
     # --- model ---
     if model_type == "mjp":
@@ -118,7 +120,9 @@ if __name__ == "__main__":
         checkpoint = torch.load(model_path, map_location="cpu")
         net.load_state_dict(checkpoint['model'], strict=True)
     else:
-        net = create_model("vit_small_patch16_224", pretrained=True).cuda()
+        net = create_model("vit_small_patch16_224", pretrained=True)
+        # net = create_model("vit_small_patch16_224", pretrained=True).cuda()
 
-    train(DATA_PATH, model=net)
+    pdb.set_trace()
+    train(DATA_PATH, data_loader=data)
 
