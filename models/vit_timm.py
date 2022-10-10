@@ -241,7 +241,7 @@ class VisionTransformer(nn.Module):
                  num_heads=12, mlp_ratio=4., qkv_bias=True, representation_size=None, distilled=False,
                  drop_rate=0., attn_drop_rate=0., drop_path_rate=0., embed_layer=PatchEmbed, norm_layer=None,
                  act_layer=None, weight_init='', 
-                 use_unk=False, use_idx_emb=False, use_dlocr=False, dlocr_type='linear'):
+                 use_unk=False, use_idx_emb=False, use_dlocr=False, dlocr_type='linear', use_avg=False):
         """
         Args:
             img_size (int, tuple): input image size
