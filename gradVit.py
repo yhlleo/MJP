@@ -1,10 +1,9 @@
 import numpy as np
 import random
-import argparse
 import torch
 import pdb
-from asyncio import constants
 import os
+import wandb
 
 import cv2
 import torch
@@ -14,97 +13,123 @@ from torch.utils.data import DataLoader
 
 from timm import create_model
 from models.vit_timm import vit_small_patch16_224
-from gradVit.gradVit_dataset import GradVitDataset
+from gradvit.gradvit_dataset import GradVitDataset
+from gradvit.gradvit_losses import GradLoss, ImageLoss, AuxLoss
 
+# --- setup environment ---
+seed = 1234
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+torch.backends.cudnn.benchmark = True
 
-def image_prior(x, model):
-    pass
-
-def patch_prior(x, model):
-    pass
-
-def grad_prior(x, model):
-    pass
-
-def train(model=None, data=None):
-    seed = 1234
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.benchmark = True
-
-    # --- gt_prior ---
-    img_prior_gt = image_prior(inp_gt, net)
-    patch_prior_gt = patch_prior(inp_gt, net)
-    grad_prior_gt = grad_prior(inp_gt, net)
-
-    # --- model ---
-    net = model
-
-    # ---loss item & optimizer ---
-    loss_mae = nn.L1Loss(reduction = 'mean')
-
+def runGradVit(model=None, data=None, loss_match=None, grad_prior=None, image_prior=None, aux_regular=None):
+    
+    wandb.init(project='MJP', entity="renbin", name="gradVit_attact")
+    
+    # --- optimizer & lr_scheduler ---
     optimizer = torch.optim.AdamW(
         net.parameters(),
         lr=0.1
     )
-
+    
     scheduler = lr_scheduler.CosineAnnealingLR(
         optimizer, 
         T_max=120000, 
         eta_min=0
     )
-    step = 0
 
-    while step <= 120000:
-        for img_gt in data:
-            inp_gt = img_gt
-            pdb.set_trace()
-            inp_noise = torch.rand(inp_gt.size()).requires_grad(True)
+    for img_gt in data:
+        # --- input noise ---
+        inp_noise = torch.rand(img_gt.size(), requires_grad=True)
 
+        # --- gt priors ---
+        grad_prior_gt = grad_prior(img_gt, model) if grad_prior is not None else 0.
+        image_prior_gt = image_prior(img_gt, model) if image_prior is not None else 0.
+        aux_regular_gt = aux_regular(img_gt, model) if aux_regular is not None else 0.
+
+        # --- GradVit attact ---
+        step = 0
+        while step <= 120000:
             # Q: 这个模型的输出需要关注或者监督吗？
-            oup_noise = net(inp_noise)
+            oup_noise = model(inp_noise)
 
-            img_prior_inp = image_prior(inp_noise, net)
-            patch_prior_inp = patch_prior(inp_noise, net)
-            grad_prior_inp = patch_prior(inp_noise, net)
+            # --- inp_noise priors
+            grad_prior_noise = grad_prior(inp_noise, model) if grad_prior is not None else 0.
+            image_prior_noise = image_prior(inp_noise, model) if image_prior is not None else 0.
+            aux_regular_noise = aux_regular(inp_noise, model) if aux_regular is not None else 0.
 
-            loss_total = (loss_mae(img_prior_gt, img_prior_inp) + 
-                        loss_mae(patch_prior_gt, patch_prior_inp) + 
-                        loss_mae(grad_prior_gt, grad_prior_inp))
+            output = {"grad_prior_noise": grad_prior_noise}
+            output["image_prior_noise"] = image_prior_noise
+            output["aux_regular_noise"] = aux_regular_noise
+
+            alpha_grad = 4e-3 if step <= 60000 else 2e-3
+            alpha_image = 0 if step <= 60000 else 2-1
+
+            loss_match = 0.
+
+            loss_total_gt = (alpha_grad * grad_prior_gt 
+                       + alpha_image * image_prior_gt 
+                       + aux_regular_gt)
+            output["loss_total_gt"] = loss_total_gt
+
+            loss_total_noise = (alpha_grad * grad_prior_noise 
+                        + alpha_image * image_prior_noise 
+                        + aux_regular_noise)
+            output["loss_total_noise"] = loss_total_noise
+
+            loss_match = loss_match(loss_total_gt, loss_total_noise)
+            output["loss_match"] = loss_match
 
             optimizer.zerp_grad()
-            loss_total.backward()
+            loss_match.backward()
             optimizer.step()
             scheduler.step()
 
+            # --- log losses
+            if step % 100 == 1:
+                for (los_n, los_v) in output.items():
+                    wandb.log({los_n: los_v}, step)
+
+            pdb.set_trace()
+            # --- save images ---
+            if step % 10 == 1:
+                img_gt = img_gt[0].permute(1, 2, 0).detach().cpu().numpy() * 255
+                inp_noise = inp_noise[0].permute(1, 2, 0).detach().cpu().numpy() * 255
+                imgs = np.concatenate((img_gt, inp_noise), 1)[:, :, ::-1]
+                wandb.log({str(step) + "/img": wandb.Image(imgs)}, step)
+
             step += 1
 
-        #TODO: save images
-        if step % 1000 == 1:
 
-            pass
-    
 
 if __name__ == "__main__":
 
-    DATA_PATH = "./gradVit/data4GradVit"
+    DATA_PATH = "./gradvit/data4GradVit"
     model_type = "vit-small" # mjp, vit-small
     model_path = ""
 
     # --- data ---
-    dataset_train = GradVitDataset(
+    dataset = GradVitDataset(
         root_path = DATA_PATH
     )
     data = DataLoader(
-        dataset_train,
+        dataset,
         batch_size=1,
         pin_memory=True,
         num_workers=8,
         drop_last=True,
         shuffle=False
     )
+
+    # --- priors (gradient_match_loss, image_loss, aux_regularization) ---
+    grad_prior = GradLoss()
+    image_prior = ImageLoss()
+    aux_regular = AuxLoss()
+
+    # --- loss match ---
+    loss_match = nn.L1Loss(reduction = 'mean')
 
     # --- model ---
     if model_type == "mjp":
@@ -123,6 +148,9 @@ if __name__ == "__main__":
         net = create_model("vit_small_patch16_224", pretrained=True)
         # net = create_model("vit_small_patch16_224", pretrained=True).cuda()
 
-    pdb.set_trace()
-    train(DATA_PATH, data_loader=data)
-
+    runGradVit(model=net, 
+               data=data, 
+               loss_match=loss_match, 
+               grad_prior=grad_prior, 
+               image_prior=image_prior, 
+               aux_regular=aux_regular)
