@@ -14,7 +14,8 @@ from torch.utils.data import DataLoader
 from timm import create_model
 from models.vit_timm import vit_small_patch16_224
 from gradvit.gradvit_dataset import GradVitDataset
-from gradvit.gradvit_losses import GradLoss, ImageLoss, AuxLoss
+from gradvit.gradvit_losses import image_loss
+# from gradvit.gradvit_losses import GradLoss, ImageLoss, AuxLoss
 
 # --- setup environment ---
 seed = 1234
@@ -28,25 +29,25 @@ def runGradVit(model=None, data=None, loss_match=None, grad_prior=None, image_pr
     
     wandb.init(project='MJP', entity="renbin", name="gradVit_attact")
     
-    # --- optimizer & lr_scheduler ---
-    optimizer = torch.optim.AdamW(
-        net.parameters(),
-        lr=0.1
-    )
-    
-    scheduler = lr_scheduler.CosineAnnealingLR(
-        optimizer, 
-        T_max=120000, 
-        eta_min=0
-    )
-
     for img_gt in data:
         # --- input noise ---
         inp_noise = torch.rand(img_gt.size(), requires_grad=True)
 
+        # --- optimizer & lr_scheduler ---
+        optimizer = torch.optim.AdamW(
+            [inp_noise],
+            lr=0.1
+        )
+        
+        scheduler = lr_scheduler.CosineAnnealingLR(
+            optimizer, 
+            T_max=120000, 
+            eta_min=0
+        )
+
         # --- gt priors ---
         grad_prior_gt = grad_prior(img_gt, model) if grad_prior is not None else 0.
-        image_prior_gt = image_prior(img_gt, model) if image_prior is not None else 0.
+        image_prior_gt = image_prior(img_gt, inp_noise) if image_prior is not None else 0.
         aux_regular_gt = aux_regular(img_gt, model) if aux_regular is not None else 0.
 
         # --- GradVit attact ---
@@ -57,7 +58,7 @@ def runGradVit(model=None, data=None, loss_match=None, grad_prior=None, image_pr
 
             # --- inp_noise priors
             grad_prior_noise = grad_prior(inp_noise, model) if grad_prior is not None else 0.
-            image_prior_noise = image_prior(inp_noise, model) if image_prior is not None else 0.
+            image_prior_noise = image_prior(img_gt, inp_noise) if image_prior is not None else 0.
             aux_regular_noise = aux_regular(inp_noise, model) if aux_regular is not None else 0.
 
             output = {"grad_prior_noise": grad_prior_noise}
@@ -103,7 +104,6 @@ def runGradVit(model=None, data=None, loss_match=None, grad_prior=None, image_pr
             step += 1
 
 
-
 if __name__ == "__main__":
 
     DATA_PATH = "./gradvit/data4GradVit"
@@ -122,11 +122,6 @@ if __name__ == "__main__":
         drop_last=True,
         shuffle=False
     )
-
-    # --- priors (gradient_match_loss, image_loss, aux_regularization) ---
-    grad_prior = GradLoss()
-    image_prior = ImageLoss()
-    aux_regular = AuxLoss()
 
     # --- loss match ---
     loss_match = nn.L1Loss(reduction = 'mean')
@@ -148,9 +143,10 @@ if __name__ == "__main__":
         net = create_model("vit_small_patch16_224", pretrained=True)
         # net = create_model("vit_small_patch16_224", pretrained=True).cuda()
 
+
     runGradVit(model=net, 
                data=data, 
                loss_match=loss_match, 
-               grad_prior=grad_prior, 
-               image_prior=image_prior, 
-               aux_regular=aux_regular)
+               grad_prior=None, 
+               image_prior=image_loss, 
+               aux_regular=None)
