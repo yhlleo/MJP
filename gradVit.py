@@ -38,7 +38,6 @@ def runGradVit(model=None, data=None, loss_match=None, grad_prior=None, image_pr
             [inp_noise],
             lr=0.1
         )
-        
         scheduler = lr_scheduler.CosineAnnealingLR(
             optimizer, 
             T_max=120000, 
@@ -68,16 +67,10 @@ def runGradVit(model=None, data=None, loss_match=None, grad_prior=None, image_pr
             alpha_grad = 4e-3 if step <= 60000 else 2e-3
             alpha_image = 0 if step <= 60000 else 2-1
 
-            loss_match = 0.
-
-            loss_total_gt = (alpha_grad * grad_prior_gt 
-                       + alpha_image * image_prior_gt 
-                       + aux_regular_gt)
-            output["loss_total_gt"] = loss_total_gt
-
             loss_total_noise = (alpha_grad * grad_prior_noise 
-                        + alpha_image * image_prior_noise 
-                        + aux_regular_noise)
+                              + alpha_image * image_prior_noise 
+
+                              + aux_regular_noise)
             output["loss_total_noise"] = loss_total_noise
 
             loss_match = loss_match(loss_total_gt, loss_total_noise)
@@ -93,7 +86,6 @@ def runGradVit(model=None, data=None, loss_match=None, grad_prior=None, image_pr
                 for (los_n, los_v) in output.items():
                     wandb.log({los_n: los_v}, step)
 
-            pdb.set_trace()
             # --- save images ---
             if step % 10 == 1:
                 img_gt = img_gt[0].permute(1, 2, 0).detach().cpu().numpy() * 255

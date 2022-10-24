@@ -11,20 +11,20 @@ from timm.models.layers import PatchEmbed
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm import create_model
 
-from data.masking_generator import JigsawPuzzleMaskedRegion
+# from ..data.masking_generator import JigsawPuzzleMaskedRegion
 
-masking_ratio = 0.9
-jigsaw_pullzer = JigsawPuzzleMaskedRegion(224, 16)
-jigsaw_pullzer._update_masking_generator(300, 0, masking_ratio)
+# masking_ratio = 0.9
+# jigsaw_pullzer = JigsawPuzzleMaskedRegion(224, 16)
+# jigsaw_pullzer._update_masking_generator(300, 0, masking_ratio)
 
 
-def grad_loss(images, target, inp_noise, model, jigsaw_pullzer, use_mjp=False):
+def grad_loss(images, target, inp_noise, model, jigsaw_pullzer=None, use_mjp=False):
     # --- process input with mjp ---
     unk_mask = None
     if use_mjp:
         images, unk_mask = jigsaw_pullzer(images)
-        # unk_mask = torch.from_numpy(unk_mask).long()
-        unk_mask = torch.from_numpy(unk_mask).long().cuda()
+        unk_mask = torch.from_numpy(unk_mask).long()
+        # unk_mask = torch.from_numpy(unk_mask).long().cuda()
 
     ### --- For Gt Inputs --- ###
     # --- 1. get shared gradients ---
@@ -78,10 +78,6 @@ def grad_loss(images, target, inp_noise, model, jigsaw_pullzer, use_mjp=False):
 
     assert(len(grad_noise_save) == len(grad_gt_save))
 
-    print("@@@@@@@@@@@@@@@@@@@")
-    print(len(grad_noise_save))
-    print(len(grad_gt_save))
-
     for i in range(0, len(grad_noise_save)):
         loss_grad_out += loss(grad_noise_save[i][0], grad_gt_save[i][0])
 
@@ -90,14 +86,16 @@ def grad_loss(images, target, inp_noise, model, jigsaw_pullzer, use_mjp=False):
     for i in range(len(hooks_gt)):
         hooks_gt[i].remove()
 
+    pdb.set_trace()
+
     return loss_grad_out
 
 
 def image_loss(inp_noise):
     loss = torch.nn.MSELoss(reduction="sum")
 
-    # model = models.resnet50(pretrained=False)
-    model = models.resnet50(pretrained=False).cuda()
+    model = models.resnet50(pretrained=False)
+    # model = models.resnet50(pretrained=False).cuda()
         
     checkpoint = torch.load("/data/bren/projects/privacy_FL/MJP/gradvit/moco_v2_200ep_pretrain.pth.tar" , map_location="cpu")
     state_dict = checkpoint['state_dict']
@@ -162,8 +160,8 @@ def image_loss(inp_noise):
 def aux_patch_loss(inp_noise):
     loss = torch.nn.MSELoss(reduction="sum")
 
-    # patch_embedder = PatchEmbed(img_size=224, patch_size=16, in_chans=3, embed_dim=768)
-    patch_embedder = PatchEmbed(img_size=224, patch_size=16, in_chans=3, embed_dim=768).cuda()
+    patch_embedder = PatchEmbed(img_size=224, patch_size=16, in_chans=3, embed_dim=768)
+    # patch_embedder = PatchEmbed(img_size=224, patch_size=16, in_chans=3, embed_dim=768).cuda()
     inp_noise_patches = patch_embedder(inp_noise)
     B, _, _  = inp_noise_patches.shape
     inp_noise_patches = inp_noise_patches.reshape((B, 14, 14, 3, 16, 16))
@@ -206,6 +204,12 @@ if __name__ == "__main__":
     
     inp_noise = torch.randn(inp_gt.size(), requires_grad=True)
 
-    aux_extra_loss(inp_gt, inp_noise)
+    # aux_extra_loss(inp_gt, inp_noise)
+
+
     net = create_model("vit_small_patch16_224", pretrained=True)
     # net = create_model("vit_small_patch16_224", pretrained=True).cuda()
+    
+    for (name, module) in net.named_modules():
+        print(name)
+
