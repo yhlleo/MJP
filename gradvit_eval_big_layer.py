@@ -6,6 +6,7 @@ from tqdm import tqdm
 from utils import reduce_tensor
 
 import torch
+import torch.nn as nn
 from torchvision import transforms, datasets
 from torch.optim import lr_scheduler
 
@@ -13,7 +14,7 @@ from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm import create_model
 
 from models.vit_timm import vit_small_patch16_224
-from gradvit.gradvit_losses_20 import grad_loss, image_loss, aux_patch_loss, aux_extra_loss
+from gradvit.gradvit_losses import grad_loss, image_loss, aux_patch_loss, aux_extra_loss
 from data.masking_generator import JigsawPuzzleMaskedRegion
 
 
@@ -41,7 +42,7 @@ dataset_val = datasets.ImageFolder(DATA_PATH, transform=build_transform())
 data_loader_val = torch.utils.data.DataLoader(
     dataset_val, sampler=None,
     batch_size=BATCH_SIZE,
-    shuffle=True,
+    shuffle=False,
     num_workers=8,
     pin_memory=True,
     drop_last=False
@@ -61,7 +62,7 @@ if model_type == "mjp":
     checkpoint = torch.load(model_path, map_location="cpu")
     net.load_state_dict(checkpoint['model'], strict=True)
 else:
-    net = create_model("vit_small_patch16_224", pretrained=True)
+    net = create_model("vit_small_patch16_224", pretrained=True).cuda()
     # net = create_model("vit_small_patch16_224", pretrained=False,
     #     checkpoint_path="/path/to/pretrained_models/deit/S_16-i21k-300ep-lr_0.001-aug_light1-wd_0.03-do_0.0-sd_0.0--imagenet2012-steps_20k-lr_0.03-res_224.npz"
     # )
@@ -79,16 +80,15 @@ def validate(data_loader, model, jigsaw_pullzer, use_mjp=False, grad_loss=None, 
     # model.eval()
 
     for idx, (images, target) in tqdm(enumerate(data_loader)):
-
         # --- to CUDA ---
-        # images = images.cuda(non_blocking=True)
-        # target = target.cuda(non_blocking=True)
+        images = images.cuda(non_blocking=True)
+        target = target.cuda(non_blocking=True)
 
-        # inp_noise = torch.rand(images.size()).cuda()
-        # inp_noise.requires_grad=True
-
-        inp_noise = torch.rand(images.size())
+        inp_noise = torch.rand(images.size()).cuda()
         inp_noise.requires_grad=True
+
+        # inp_noise = torch.rand(images.size())
+        # inp_noise.requires_grad=True
 
         # --- optimizer & lr_scheduler ---
         optimizer = torch.optim.AdamW(
@@ -111,7 +111,7 @@ def validate(data_loader, model, jigsaw_pullzer, use_mjp=False, grad_loss=None, 
                     images, 
                     target, 
                     inp_noise, 
-                    model, 
+                    model.cuda(), 
                     jigsaw_pullzer, 
                     use_mjp=False
                 ) 
@@ -133,13 +133,8 @@ def validate(data_loader, model, jigsaw_pullzer, use_mjp=False, grad_loss=None, 
                       + alpha3 * aux_extra_priors
             ) 
 
-
-            if 0 <= step <= 6000:
-                alpha_grad = 4e-3
-                alpha_image = 0
-            else:
-                alpha_grad = 2e-3
-                alpha_image = 2e-1
+            alpha_grad = 4e-3 if (step <= 6000) else 2e-3
+            alpha_image = 0 if (step <= 6000) else 2e-1
 
             # --- total losses ---
             loss_total_noise = 0.
@@ -149,10 +144,13 @@ def validate(data_loader, model, jigsaw_pullzer, use_mjp=False, grad_loss=None, 
                               + aux_loss
             )
 
-            output = {"grad_prior_noise": grad_prior_noise}
-            output["image_prior_noise"] = image_prior_noise
-            output["aux_patch_noise"] = aux_patch_noise
-            output["aux_extra_priors"] = aux_extra_priors
+            output = {"grad_prior_noise": grad_prior_noise * alpha_grad}
+            output["image_prior_noise"] = image_prior_noise * alpha_image
+            output["aux_patch_noise"] = aux_patch_noise * alpha1
+            output["aux_registration"] = aux_registration * alpha2
+            output["aux_extra_priors"] = aux_extra_priors * alpha3
+            output["aux_loss"] = aux_loss
+
             output["loss_total_noise"] = loss_total_noise
 
             # --- optimize ---
@@ -161,19 +159,27 @@ def validate(data_loader, model, jigsaw_pullzer, use_mjp=False, grad_loss=None, 
             optimizer.step()
             scheduler.step()
 
-            # --- log losses
+            # --- log losses ---
             if step % 100 == 1:
                 for (los_n, los_v) in output.items():
                     wandb.log({los_n: los_v}, step)
-
+                    
             # --- save images ---
-            if step % 100 == 1:
-                vis_gt = (images[0].permute(1, 2, 0).detach().cpu().numpy() * 255)[:, :, ::-1]
-                vis_inp_noise = (inp_noise[0].permute(1, 2, 0).detach().cpu().numpy() * 255)[:, :, ::-1]
+            if step % 100 == 1:    
+                mean, std = IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
+                gt_image_vis = images[0].clone().detach()
+                inp_noise_vis = inp_noise[0].clone().detach()
+                for i in range(3):
+                    gt_image_vis[i] = gt_image_vis[i] * std[i] + mean[i]
+                    inp_noise_vis[i] = inp_noise_vis[i] * std[i] + mean[i]
+
+                vis_gt = (gt_image_vis.permute(1, 2, 0).cpu().numpy() * 255).clip(0, 255)
+                vis_inp_noise = (inp_noise_vis.permute(1, 2, 0).cpu().numpy() * 255).clip(0, 255)
+
                 # imgs = np.concatenate((vis_gt, vis_inp_noise), 1)
                 wandb.log({str("gt") + "/img_gt": wandb.Image(vis_gt)}, step)
                 wandb.log({str("noise") + "/img_noise": wandb.Image(vis_inp_noise)}, step)
-
+    
             step += 1
 
 

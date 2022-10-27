@@ -168,7 +168,7 @@ def validate(data_loader, model, jigsaw_pullzer, DEBUG, use_mjp=False, grad_loss
                       + alpha3 * aux_extra_priors
             ) 
 
-            alpha_grad = 4e-3 if (step <= (STEP / 2)) else 2e-3
+            alpha_grad = 4e-4 if (step <= (STEP / 2)) else 2e-4
             alpha_image = 0 if (step <= (STEP / 2 )) else 2e-1
 
             # --- total losses ---

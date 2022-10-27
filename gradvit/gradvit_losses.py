@@ -18,13 +18,15 @@ jigsaw_pullzer = JigsawPuzzleMaskedRegion(224, 16)
 jigsaw_pullzer._update_masking_generator(300, 0, masking_ratio)
 
 
-def grad_loss(images, target, inp_noise, model, jigsaw_pullzer, use_mjp=False):
+def grad_loss(images, target, inp_noise, model, jigsaw_pullzer, DEBUG, use_mjp=False):
     # --- process input with mjp ---
     unk_mask = None
     if use_mjp:
         images, unk_mask = jigsaw_pullzer(images)
-        # unk_mask = torch.from_numpy(unk_mask).long()
-        unk_mask = torch.from_numpy(unk_mask).long().cuda()
+        if DEBUG:
+            unk_mask = torch.from_numpy(unk_mask).long()
+        else:
+            unk_mask = torch.from_numpy(unk_mask).long().cuda()
 
     ### --- For Gt Inputs --- ###
     # --- 1. get shared gradients ---
@@ -34,9 +36,9 @@ def grad_loss(images, target, inp_noise, model, jigsaw_pullzer, use_mjp=False):
 
     hooks_gt = []
     for i, (name, module) in enumerate(model.named_modules()):
-        if "mlp.drop" in name:
-            handle = module.register_backward_hook(register_backward_hook)
-            hooks_gt.append(handle)
+        # if "mlp.drop" in name:
+        handle = module.register_backward_hook(register_backward_hook)
+        hooks_gt.append(handle)
 
     # --- 2. compute output ---
     output = model(images, unk_mask=unk_mask)
@@ -51,9 +53,6 @@ def grad_loss(images, target, inp_noise, model, jigsaw_pullzer, use_mjp=False):
 
     # --- 5. save ---
     grad_gt_save = [elem for elem in grad_out_gt]
-
-    print(len(grad_gt_save))
-
     grad_out_gt.clear()
     
     ### --- For Noise Inputs --- ###
@@ -67,20 +66,16 @@ def grad_loss(images, target, inp_noise, model, jigsaw_pullzer, use_mjp=False):
     # --- 4. backward loss ---
     model.zero_grad()
     loss_noise.backward()
+    nn.utils.clip_grad_norm_(model.parameters(), 1)
 
     grad_noise_save = grad_out_gt
     # grad_out_gt.clear()
 
     ### --- For L2 Norm --- ###
-    # --- l2 norm ---
-    loss = torch.nn.MSELoss(reduction="sum") 
+    loss = torch.nn.MSELoss(reduction="mean") 
     loss_grad_out = 0.
 
     assert(len(grad_noise_save) == len(grad_gt_save))
-
-    print("@@@@@@@@@@@@@@@@@@@")
-    print(len(grad_noise_save))
-    print(len(grad_gt_save))
 
     for i in range(0, len(grad_noise_save)):
         loss_grad_out += loss(grad_noise_save[i][0], grad_gt_save[i][0])
@@ -93,13 +88,34 @@ def grad_loss(images, target, inp_noise, model, jigsaw_pullzer, use_mjp=False):
     return loss_grad_out
 
 
-def image_loss(inp_noise):
-    loss = torch.nn.MSELoss(reduction="sum")
+def grad_loss_breaching(inp_gradient, labels, inp_noise, optimizer, model, jigsaw_pullzer, DEBUG, use_mjp=False):
 
-    # model = models.resnet50(pretrained=False)
-    model = models.resnet50(pretrained=False).cuda()
+    optimizer.zero_grad()
+    model.zero_grad()
+    loss_fn = torch.nn.CrossEntropyLoss()
+    loss_noise = loss_fn(model(inp_noise).sup, labels.detach())
+
+    gradients = torch.autograd.grad(loss_noise, model.parameters(), create_graph=True)
+    cost_fn = nn.MSELoss(reduction="mean")
+    costs = 0.
+    for i in range(len(gradients)):
+        costs += cost_fn(gradients[i], inp_gradient[i]) 
+
+    return costs
         
-    checkpoint = torch.load("/data/bren/projects/privacy_FL/MJP/gradvit/moco_v2_200ep_pretrain.pth.tar" , map_location="cpu")
+        
+def image_loss(inp_noise, DEBUG):
+    loss = torch.nn.MSELoss(reduction="mean")
+
+    if DEBUG:
+        model = models.resnet50(pretrained=False)
+    else:
+        model = models.resnet50(pretrained=False).cuda()
+
+    checkpoint = torch.load(
+                    "/data/bren/projects/privacy_FL/MJP/gradvit/moco_v2_200ep_pretrain.pth.tar" , 
+                    map_location="cpu"
+                )
     state_dict = checkpoint['state_dict']
 
     for k in list(state_dict.keys()):
@@ -130,7 +146,6 @@ def image_loss(inp_noise):
         bn_inp.append(input)
 
     for (name, module) in model.named_modules():
-        # print(name)
         if 'bn' in name:
             module.register_forward_hook(bn_inp_hook)
 
@@ -149,21 +164,22 @@ def image_loss(inp_noise):
     # --- loss ---
     mean_diff = 0.
     var_diff = 0.
-
     for i in range(0, len(bn_run_mean_value_gt_list)):
         mean_diff += loss(bn_run_mean_value_gt_list[i], bn_mean_gt_list[i])
         var_diff += loss(bn_run_var_value_gt_list[i], bn_var_noise_list[i])
 
     image_loss = mean_diff + var_diff
-
     return image_loss
 
 
-def aux_patch_loss(inp_noise):
-    loss = torch.nn.MSELoss(reduction="sum")
+def aux_patch_loss(inp_noise, DEBUG):
+    loss = torch.nn.MSELoss(reduction="mean")
 
-    # patch_embedder = PatchEmbed(img_size=224, patch_size=16, in_chans=3, embed_dim=768)
-    patch_embedder = PatchEmbed(img_size=224, patch_size=16, in_chans=3, embed_dim=768).cuda()
+    if DEBUG:
+        patch_embedder = PatchEmbed(img_size=224, patch_size=16, in_chans=3, embed_dim=768)
+    else:
+        patch_embedder = PatchEmbed(img_size=224, patch_size=16, in_chans=3, embed_dim=768).cuda()
+
     inp_noise_patches = patch_embedder(inp_noise)
     B, _, _  = inp_noise_patches.shape
     inp_noise_patches = inp_noise_patches.reshape((B, 14, 14, 3, 16, 16))
@@ -171,16 +187,18 @@ def aux_patch_loss(inp_noise):
 
     loss_patch = 0.
     for i in range(num_h-1):
-        loss_vertical = torch.sqrt(loss(inp_noise_patches[:, i+1, :, :, 0, :], inp_noise_patches[:, i, :, :, 15, :]))
-        loss_horizontal = torch.sqrt(loss(inp_noise_patches[:, :, i+1, :, :, 0], inp_noise_patches[:, :, i, :, :, 15]))
+        loss_vertical = loss(inp_noise_patches[:, i+1, :, :, 0, :], inp_noise_patches[:, i, :, :, 15, :])
+        loss_horizontal = loss(inp_noise_patches[:, :, i+1, :, :, 0], inp_noise_patches[:, :, i, :, :, 15])
         loss_patch += (loss_vertical + loss_horizontal)
 
     return loss_patch
+
 
 def aux_extra_loss(inp_noise):
     tv_loss = TVLoss()
     out = tv_loss(inp_noise) + torch.norm(inp_noise, p=2)
     return out
+
 
 class TVLoss(nn.Module):
     def __init__(self,TVLoss_weight=1):

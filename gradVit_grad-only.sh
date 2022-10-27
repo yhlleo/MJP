@@ -9,4 +9,4 @@ eval "$(conda shell.bash hook)"
 # Activate a conda environment:
 conda activate mjp     
 
-python gradvit_eval_big_layer.py
+python gradvit_eval_grad-only.py
