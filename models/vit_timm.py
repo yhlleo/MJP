@@ -31,7 +31,7 @@ from timm.models.helpers import build_model_with_cfg, named_apply, adapt_input_c
 from timm.models.layers import PatchEmbed, Mlp, DropPath, trunc_normal_, lecun_normal_
 from timm.models.registry import register_model
 
-from ssl import DenseLocRegress
+from ssl_mjp import DenseLocRegress
 
 _logger = logging.getLogger(__name__)
 
@@ -241,7 +241,7 @@ class VisionTransformer(nn.Module):
                  num_heads=12, mlp_ratio=4., qkv_bias=True, representation_size=None, distilled=False,
                  drop_rate=0., attn_drop_rate=0., drop_path_rate=0., embed_layer=PatchEmbed, norm_layer=None,
                  act_layer=None, weight_init='', 
-                 use_unk=False, use_idx_emb=False, use_dlocr=False, dlocr_type='linear'):
+                 use_unk=False, use_idx_emb=False, use_dlocr=False, dlocr_type='linear', use_avg=False):
         """
         Args:
             img_size (int, tuple): input image size

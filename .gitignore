@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 cvpr_materials/
 scripts/deit_singular.txt
 scripts/eigenvalues.pdf
@@ -11,3 +12,12 @@ scripts/visualize.py
 
 
 
+=======
+*.png
+__pycache__/
+wandb/
+*.pth
+*.pth.tar
+*.out
+gradVit.sh
+>>>>>>> 0efffec89570782ca64ef6db50196bc1d491fe4c
