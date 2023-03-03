@@ -1,5 +1,5 @@
 
-## Breaking the Chain of Gradient Leakage in Vision Transformers
+## Masked Jigsaw Puzzle: A Versatile Position Embedding for Vision Transformers (Accepted by CVPR2023)
 
 ![Python 3.6](https://img.shields.io/badge/python-3.6.8-green.svg)
 ![Packagist](https://img.shields.io/badge/Pytorch-1.6.0-red.svg)
@@ -9,15 +9,31 @@
 
 
 **[[arXiv]](https://arxiv.org/pdf/2205.12551.pdf) | [[Codes]](https://github.com/yhlleo/MJP)** <br> 
-Yahui Liu<sup>1</sup>, Bin Ren<sup>1,3</sup>, Yue Song<sup>1</sup>, Wei Bi<sup>2</sup>, Nicu Sebe<sup>1</sup> and Wei Wang<sup>1</sup> <br>
-<sup>1</sup>University of Trento, Italy, <sup>2</sup>Tencent AI Lab, China,
-<sup>3</sup>University of Pisa, Italy<br>
+Bin Ren<sup>1,2*</sup>, Yahui Liu<sup>2*</sup>, Yue Song<sup>2</sup>, Wei Bi<sup>3</sup>, Rita Cucchiara<sup>4</sup>, Nicu Sebe<sup>2</sup> and Wei Wang<sup>5$\boxdot$</sup> <br>
+
+*: Equal Contribution, $\boxdot$: Correspondence Author <br>
+<sup>1</sup>University of Pisa, Italy, <br>
+<sup>2</sup>University of Trento, Italy, <br> 
+<sup>3</sup>Tencent AI Lab, China, <br>
+<sup>4</sup>University of Modena and Reggio Emilia, Italy, <br>
+<sup>5</sup>Beijing Jiaotong University, China <br>
 
 <p align="center">
-<img src="figures/gradient-attack.jpg" width="800px"/>
+<img src="figures/overview.jpg" width="800px"/>
 <br>
-Visual comparisons on image recovery with gradient attacks.
+The main idea the overview of the proposed MJP.
 </p>
+
+The repository offers the official implementation of our paper in PyTorch.
+
+:t-rex:News(March 4, 2023)!  Our paper is accepted by CVPR2023!
+
+
+
+### Abstract
+Position Embeddings (PEs), an arguably indispensable component in Vision Transformers (ViTs), have been shown to improve the performance of ViTs on many vision tasks. However, PEs have a potentially high risk of privacy leakage since the spatial information of the input patches is exposed. This caveat naturally raises a series of interesting questions about the impact of PEs on accuracy, privacy, prediction consistency, \etc. To tackle these issues, we propose a Masked Jigsaw Puzzle (MJP) position embedding method. In particular, MJP first shuffles the selected patches via our block-wise random jigsaw puzzle shuffle algorithm, and their corresponding PEs are occluded. Meanwhile, for the non-occluded patches, the PEs remain the original ones but their spatial relation is strengthened via our dense absolute localization regressor. The experimental results reveal that 1) PEs explicitly encode the 2D spatial relationship and lead to severe privacy leakage problems under gradient inversion attack; 2) Training ViTs with the naively shuffled patches can alleviate the problem, but it harms the accuracy; 3) Under a certain shuffle ratio, the proposed MJP not only boosts the performance and robustness on large-scale datasets (\emph{i.e.}, ImageNet-1K and ImageNet-C, -A/O) but also improves the privacy preservation ability under typical gradient attacks by a large margin. 
+
+
 
 ### Datasets
 
@@ -78,7 +94,11 @@ $ python3 consistency.py
 See the codes [`MSE`](./eval/cal_mse.py), [`PSNR/SSIM`](./eval/cal_psnr_ssim.py), [`FFT2D`](./eval/cal_fft2d.py), [`LPIPS`](cal_lpips.py).
 
 ### Gradient Attack
-
+<p align="center">
+<img src="figures/gradient-attack.jpg" width="800px"/>
+<br>
+Visual comparisons on image recovery with gradient attacks.
+</p>
 We refer to the public repo: [JonasGeiping/breaching](https://github.com/JonasGeiping/breaching).
 
 ### Acknowledgement
@@ -91,16 +111,16 @@ This repo is built on several existing projects:
 
 ### Citation
 
-If you take use of our code, please cite our papers:
+If you take use of our code or feel our paper is useful for you, please cite our papers:
 
 ```
 @article{liu2022breaking,
-    author    = {Liu, Yahui and Ren, Bin and Song, Yue and Bi, Wei and Sebe, Nicu and Wang, Wei},
-    title     = {Breaking the Chain of Gradient Leakage in Vision Transformers},
-    journal    = {arXiv:2205.12551},
-    year      = {2022}
+    author    = {Ren, Bin and Liu, Yahui and Song, Yue and Bi, Wei and and Cucchiara, Rita and Sebe, Nicu and Wang, Wei},
+    title     = {Masked Jigsaw Puzzle: A Versatile Position Embedding for Vision Transformers},
+    journal    = {CVPR},
+    year      = {2023}
 }
 ```
 
-If you have any questions, please contact me without hesitation (yahui.liu AT unitn.it).
+If you have any questions, please contact me without hesitation (yahui.liu AT unitn.it or bin.ren AT unitn.it).
 
