@@ -21,7 +21,7 @@ Bin Ren<sup>1,2*</sup>, Yahui Liu<sup>2*</sup>, Yue Song<sup>2</sup>, Wei Bi<sup
 <p align="center">
 <img src="figures/overview.jpg" width="800px"/>
 <br>
-The main idea the overview of the proposed MJP.
+The main idea of random jigsaw shuffle algorithm and the overview the proposed MJP.
 </p>
 
 The repository offers the official implementation of our paper in PyTorch.
@@ -32,7 +32,6 @@ The repository offers the official implementation of our paper in PyTorch.
 
 ### Abstract
 Position Embeddings (PEs), an arguably indispensable component in Vision Transformers (ViTs), have been shown to improve the performance of ViTs on many vision tasks. However, PEs have a potentially high risk of privacy leakage since the spatial information of the input patches is exposed. This caveat naturally raises a series of interesting questions about the impact of PEs on accuracy, privacy, prediction consistency, \etc. To tackle these issues, we propose a Masked Jigsaw Puzzle (MJP) position embedding method. In particular, MJP first shuffles the selected patches via our block-wise random jigsaw puzzle shuffle algorithm, and their corresponding PEs are occluded. Meanwhile, for the non-occluded patches, the PEs remain the original ones but their spatial relation is strengthened via our dense absolute localization regressor. The experimental results reveal that 1) PEs explicitly encode the 2D spatial relationship and lead to severe privacy leakage problems under gradient inversion attack; 2) Training ViTs with the naively shuffled patches can alleviate the problem, but it harms the accuracy; 3) Under a certain shuffle ratio, the proposed MJP not only boosts the performance and robustness on large-scale datasets (\emph{i.e.}, ImageNet-1K and ImageNet-C, -A/O) but also improves the privacy preservation ability under typical gradient attacks by a large margin. 
-
 
 
 ### Datasets
