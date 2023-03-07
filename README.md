@@ -122,5 +122,5 @@ If you take use of our code or feel our paper is useful for you, please cite our
 }
 ```
 
-If you have any questions, please contact me without hesitation (yahui.liu AT unitn.it or bin.ren AT unitn.it).
+If you have any questions, please contact me without hesitation (yahui.cvrs AT gmail.com or bin.ren AT unitn.it).
 
