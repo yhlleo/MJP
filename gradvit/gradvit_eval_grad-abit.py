@@ -15,7 +15,7 @@ from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm import create_model
 
 from models.vit_timm import vit_small_patch16_224
-from gradvit.gradvit_losses import grad_loss, image_loss, aux_patch_loss, aux_extra_loss, grad_loss_breaching
+from gradvit_losses import grad_loss, image_loss, aux_patch_loss, aux_extra_loss, grad_loss_breaching
 from data.masking_generator import JigsawPuzzleMaskedRegion
 
 

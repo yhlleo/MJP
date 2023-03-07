@@ -9,14 +9,14 @@
 
 
 **[[arXiv]](https://arxiv.org/pdf/2205.12551.pdf) | [[Codes]](https://github.com/yhlleo/MJP)** <br> 
-Bin Ren<sup>1,2*</sup>, Yahui Liu<sup>2*</sup>, Yue Song<sup>2</sup>, Wei Bi<sup>3</sup>, Rita Cucchiara<sup>4</sup>, Nicu Sebe<sup>2</sup> and Wei Wang<sup>5$\boxdot$</sup> <br>
-
-*: Equal Contribution, $\boxdot$: Correspondence Author <br>
+[Bin Ren](https://scholar.google.com/citations?hl=en&user=Md9maLYAAAAJ)<sup>1,2</sup>$^\star$, [Yahui Liu](https://scholar.google.com/citations?user=P8qd0rEAAAAJ&hl=en)<sup>2</sup>$^\star$, [Yue Song](https://scholar.google.com/citations?hl=en&user=Uza2i10AAAAJ)<sup>2</sup>, [Wei Bi](https://scholar.google.com/citations?user=aSJcgQMAAAAJ&hl=en)<sup>3</sup>, [Rita Cucchiara](https://scholar.google.com/citations?user=OM3sZEoAAAAJ&hl=en)<sup>4</sup>, [Nicu Sebe](https://scholar.google.com/citations?user=stFCYOAAAAAJ&hl=en)<sup>2</sup> and [Wei Wang](https://scholar.google.com/citations?user=k4SdlbcAAAAJ&hl=en)<sup>5</sup>$^\dagger$ <br>
+$\star$: Equal Contribution, $\dagger$: Correspondence Author <br>
 <sup>1</sup>University of Pisa, Italy, <br>
 <sup>2</sup>University of Trento, Italy, <br> 
 <sup>3</sup>Tencent AI Lab, China, <br>
 <sup>4</sup>University of Modena and Reggio Emilia, Italy, <br>
 <sup>5</sup>Beijing Jiaotong University, China <br>
+
 
 <p align="center">
 <img src="figures/overview.jpg" width="800px"/>

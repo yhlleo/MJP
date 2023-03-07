@@ -15,7 +15,7 @@ from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm import create_model
 
 from models.vit_timm import vit_small_patch16_224
-from gradvit.gradvit_losses import grad_loss, image_loss, aux_patch_loss, aux_extra_loss, grad_loss_breaching
+from gradvit_losses import grad_loss, image_loss, aux_patch_loss, aux_extra_loss, grad_loss_breaching
 from data.masking_generator import JigsawPuzzleMaskedRegion
 
 
@@ -161,7 +161,7 @@ def validate(data_loader, model, jigsaw_pullzer, DEBUG, use_mjp=False, grad_loss
             aux_patch_noise = aux_patch_loss(inp_noise, DEBUG) if aux_patch_loss is not None else 0.
             aux_registration = 0.
             aux_extra_priors = aux_extra_loss(inp_noise) if aux_extra_loss is not None else 0.
-            alpha1, alpha2, alpha3 = 1e-4, 1e-2, 1e-4
+            alpha1, alpha2, alpha3 = 0, 0, 0
 
             aux_loss = (alpha1 * aux_patch_noise
                       + alpha2 * aux_registration
@@ -169,7 +169,7 @@ def validate(data_loader, model, jigsaw_pullzer, DEBUG, use_mjp=False, grad_loss
             ) 
 
             alpha_grad = 4e-3 if (step <= (STEP / 2)) else 2e-3
-            alpha_image = 0 if (step <= (STEP / 2 )) else 2e-1
+            alpha_image = 0 
 
             # --- total losses ---
             loss_total_noise = 0.

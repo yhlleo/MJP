@@ -13,8 +13,8 @@ from torch.utils.data import DataLoader
 
 from timm import create_model
 from models.vit_timm import vit_small_patch16_224
-from gradvit.gradvit_dataset import GradVitDataset
-from gradvit.gradvit_losses import image_loss
+from gradvit_dataset import GradVitDataset
+from gradvit_losses import image_loss
 # from gradvit.gradvit_losses import GradLoss, ImageLoss, AuxLoss
 
 # --- setup environment ---
