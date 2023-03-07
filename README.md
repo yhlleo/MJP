@@ -117,7 +117,7 @@ If you take use of our code or feel our paper is useful for you, please cite our
 @article{liu2022breaking,
     author    = {Ren, Bin and Liu, Yahui and Song, Yue and Bi, Wei and and Cucchiara, Rita and Sebe, Nicu and Wang, Wei},
     title     = {Masked Jigsaw Puzzle: A Versatile Position Embedding for Vision Transformers},
-    journal    = {CVPR},
+    journal   = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
     year      = {2023}
 }
 ```
