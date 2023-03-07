@@ -114,7 +114,7 @@ This repo is built on several existing projects:
 If you take use of our code or feel our paper is useful for you, please cite our papers:
 
 ```
-@article{liu2022breaking,
+@article{ren2023masked,
     author    = {Ren, Bin and Liu, Yahui and Song, Yue and Bi, Wei and and Cucchiara, Rita and Sebe, Nicu and Wang, Wei},
     title     = {Masked Jigsaw Puzzle: A Versatile Position Embedding for Vision Transformers},
     journal   = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
