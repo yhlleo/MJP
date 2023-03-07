@@ -1,5 +1,5 @@
 
-## Masked Jigsaw Puzzle: A Versatile Position Embedding for Vision Transformers (Accepted by CVPR2023)
+## Masked Jigsaw Puzzle: A Versatile Position Embedding for Vision Transformers, CVPR2023
 
 ![Python 3.6](https://img.shields.io/badge/python-3.6.8-green.svg)
 ![Packagist](https://img.shields.io/badge/Pytorch-1.6.0-red.svg)
@@ -26,7 +26,7 @@ The main idea of random jigsaw shuffle algorithm and the overview the proposed M
 
 The repository offers the official implementation of our paper in PyTorch.
 
-:t-rex:News(March 4, 2023)!  Our paper is accepted by CVPR2023!
+:t-rex:News(March 4, 2023)!  **Our paper is accepted by CVPR2023!**
 
 
 
