@@ -94,10 +94,11 @@ See the codes [`MSE`](./eval/cal_mse.py), [`PSNR/SSIM`](./eval/cal_psnr_ssim.py)
 
 ### Gradient Attack
 <p align="center">
-<img src="figures/gradient-attack.jpg" width="800px"/>
+<img src="figures/gradient_attack_cvpr.jpg" width="800px"/>
 <br>
 Visual comparisons on image recovery with gradient attacks.
 </p>
+
 We refer to the public repo: [JonasGeiping/breaching](https://github.com/JonasGeiping/breaching).
 
 ### Acknowledgement
