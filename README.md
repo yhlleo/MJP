@@ -98,6 +98,13 @@ $ python3 consistency.py
 
 See the codes [`MSE`](./eval/cal_mse.py), [`PSNR/SSIM`](./eval/cal_psnr_ssim.py), [`FFT2D`](./eval/cal_fft2d.py), [`LPIPS`](cal_lpips.py).
 
+
+- Evaluation of Robustness
+
+See the codes ['mCE'](./eval/cal_imagenet_c.py).
+Note that in the camera-ready version, we reported unnormalized results. However, in accordance with the conventions of the robustness literature, we have updated this version to include the normalized values. Nonetheless, it is important to note that our MJP consistently outperforms the DeiT-S model for both evaluation methods.
+
+
 ### Gradient Attack
 <p align="center">
 <img src="figures/gradient_attack_cvpr.jpg" width="800px"/>
