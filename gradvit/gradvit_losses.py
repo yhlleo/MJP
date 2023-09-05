@@ -97,9 +97,7 @@ def grad_loss_breaching(inp_gradient, labels, inp_noise, optimizer, model, jigsa
 
     gradients = torch.autograd.grad(loss_noise, model.parameters(), create_graph=True)
     cost_fn = nn.MSELoss(reduction="mean")
-    costs = 0.
-    for i in range(len(gradients)):
-        costs += cost_fn(gradients[i], inp_gradient[i]) 
+    costs = np.sum([cost_fn(g, inp_gradient[i])  for i, g in enumerate(gradients)])
 
     return costs
         
