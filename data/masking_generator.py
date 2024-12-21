@@ -18,7 +18,10 @@ Modified by Hangbo Bao, for generating the masked position for visual image tran
 # Hacked together by / Copyright 2020 Ross Wightman
 #
 # Modified by Hangbo Bao, for generating the masked position for visual image transformer
-# --------------------------------------------------------'
+# --------------------------------------------------------
+"""
+Modified by Yahui Liu, for generate jigsaw puzzle masked regions (https://arxiv.org/pdf/2205.12551)
+"""
 import random
 import math
 import copy
